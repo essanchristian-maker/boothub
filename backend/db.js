@@ -51,6 +51,7 @@ async function initDB() {
       id SERIAL PRIMARY KEY,
       post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      parent_id INTEGER REFERENCES comments(id) ON DELETE SET NULL,
       content TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT NOW()
     );
@@ -64,6 +65,10 @@ async function initDB() {
       read INTEGER DEFAULT 0,
       created_at TIMESTAMP DEFAULT NOW()
     );
+  `);
+  // Migration : ajoute parent_id si la table comments existait déjà sans cette colonne
+  await pool.query(`
+    ALTER TABLE comments ADD COLUMN IF NOT EXISTS parent_id INTEGER REFERENCES comments(id) ON DELETE SET NULL;
   `);
   console.log('✅ Base de données prête');
 }

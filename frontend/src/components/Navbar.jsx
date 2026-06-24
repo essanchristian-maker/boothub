@@ -36,6 +36,7 @@ export default function Navbar() {
   const notifLabel = (n) => {
     if (n.type === 'like')    return `${n.from_name} a aimé ton post`;
     if (n.type === 'comment') return `${n.from_name} a commenté ton post`;
+    if (n.type === 'reply')   return `${n.from_name} a répondu à ton commentaire`;
     return n.type;
   };
 

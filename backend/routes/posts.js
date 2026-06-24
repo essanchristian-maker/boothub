@@ -100,9 +100,14 @@ router.post('/:id/like', auth, async (req, res) => {
 router.get('/:id/comments', auth, async (req, res) => {
   try {
     const { rows } = await db.query(
-      `SELECT c.*, u.name as user_name, u.avatar_color
-       FROM comments c JOIN users u ON c.user_id = u.id
-       WHERE c.post_id = $1 ORDER BY c.created_at ASC`,
+      `SELECT c.*, u.name as user_name, u.avatar_color,
+              pu.name as parent_user_name
+       FROM comments c
+       JOIN users u ON c.user_id = u.id
+       LEFT JOIN comments pc ON c.parent_id = pc.id
+       LEFT JOIN users pu ON pc.user_id = pu.id
+       WHERE c.post_id = $1
+       ORDER BY COALESCE(c.parent_id, c.id), c.created_at ASC`,
       [req.params.id]
     );
     res.json(rows);
@@ -114,30 +119,52 @@ router.get('/:id/comments', auth, async (req, res) => {
 
 router.post('/:id/comments', auth, async (req, res) => {
   try {
-    const { content } = req.body;
+    const { content, parent_id } = req.body;
     if (!content || !content.trim()) return res.status(400).json({ error: 'Commentaire vide' });
 
     const { rows } = await db.query(
-      'INSERT INTO comments (post_id, user_id, content) VALUES ($1,$2,$3) RETURNING id',
-      [req.params.id, req.user.id, content.trim()]
+      'INSERT INTO comments (post_id, user_id, content, parent_id) VALUES ($1,$2,$3,$4) RETURNING id',
+      [req.params.id, req.user.id, content.trim(), parent_id || null]
     );
     await db.query('UPDATE posts SET comments_count = comments_count + 1 WHERE id=$1', [req.params.id]);
 
     const { rows: cRows } = await db.query(
-      `SELECT c.*, u.name as user_name, u.avatar_color FROM comments c JOIN users u ON c.user_id=u.id WHERE c.id=$1`,
+      `SELECT c.*, u.name as user_name, u.avatar_color,
+              pu.name as parent_user_name
+       FROM comments c
+       JOIN users u ON c.user_id = u.id
+       LEFT JOIN comments pc ON c.parent_id = pc.id
+       LEFT JOIN users pu ON pc.user_id = pu.id
+       WHERE c.id = $1`,
       [rows[0].id]
     );
 
+    const comment = cRows[0];
+    const io = req.app.get('io');
+
+    // Notifie l'auteur du post
     const { rows: p } = await db.query('SELECT user_id FROM posts WHERE id=$1', [req.params.id]);
     if (p.length && p[0].user_id !== req.user.id) {
       await db.query(
         'INSERT INTO notifications (user_id, from_user_id, type, post_id) VALUES ($1,$2,$3,$4)',
         [p[0].user_id, req.user.id, 'comment', req.params.id]
       );
-      const io = req.app.get('io');
       if (io) io.to(`user_${p[0].user_id}`).emit('notification', { type: 'comment' });
     }
-    res.json(cRows[0]);
+
+    // Notifie aussi l'auteur du commentaire parent (si c'est une réponse et pas soi-même)
+    if (parent_id) {
+      const { rows: parentRows } = await db.query('SELECT user_id FROM comments WHERE id=$1', [parent_id]);
+      if (parentRows.length && parentRows[0].user_id !== req.user.id && parentRows[0].user_id !== p[0]?.user_id) {
+        await db.query(
+          'INSERT INTO notifications (user_id, from_user_id, type, post_id) VALUES ($1,$2,$3,$4)',
+          [parentRows[0].user_id, req.user.id, 'reply', req.params.id]
+        );
+        if (io) io.to(`user_${parentRows[0].user_id}`).emit('notification', { type: 'reply' });
+      }
+    }
+
+    res.json(comment);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erreur serveur' });
