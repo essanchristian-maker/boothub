@@ -1,8 +1,18 @@
 const { Pool } = require('pg');
 
+if (!process.env.DATABASE_URL) {
+  console.error('❌ DATABASE_URL manquant dans les variables d\'environnement');
+  process.exit(1);
+}
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  ssl: { rejectUnauthorized: false }
+});
+
+// Sans ce listener, une erreur réseau crash le process entier
+pool.on('error', (err) => {
+  console.error('Erreur pool DB:', err.message);
 });
 
 async function initDB() {
@@ -55,9 +65,12 @@ async function initDB() {
       created_at TIMESTAMP DEFAULT NOW()
     );
   `);
-  console.log('Base de données initialisée');
+  console.log('✅ Base de données prête');
 }
 
-initDB().catch(console.error);
+initDB().catch(err => {
+  console.error('❌ Impossible de connecter à la base de données:', err.message);
+  process.exit(1);
+});
 
 module.exports = pool;
