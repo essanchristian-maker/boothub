@@ -9,7 +9,8 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadCount, setUnreadCount]     = useState(0);
+  const [unreadMsgs,  setUnreadMsgs]      = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -27,6 +28,7 @@ export function AuthProvider({ children }) {
     socket = io(serverUrl);
     socket.emit('join', userId);
     socket.on('notification', () => setUnreadCount(n => n + 1));
+    socket.on('new_message',  () => setUnreadMsgs(n => n + 1));
   };
 
   const login = async (email, password) => {
@@ -54,6 +56,7 @@ export function AuthProvider({ children }) {
     setUser(null);
     setNotifications([]);
     setUnreadCount(0);
+    setUnreadMsgs(0);
   };
 
   const updateUser = (u) => {
@@ -76,7 +79,8 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={{
       user, loading, login, register, logout, updateUser,
-      notifications, unreadCount, fetchNotifications, markNotificationsRead, socket
+      notifications, unreadCount, fetchNotifications, markNotificationsRead, socket,
+      unreadMsgs, clearUnreadMsgs: () => setUnreadMsgs(0)
     }}>
       {children}
     </AuthContext.Provider>

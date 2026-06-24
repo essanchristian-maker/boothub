@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../api';
+import FileUpload from './FileUpload';
+import FileAttachment from './FileAttachment';
 
 const TAGS = ['Python', 'Machine Learning', 'Deep Learning', 'Data Science', 'SQL', 'NLP', 'Computer Vision', 'Projet', 'Ressource', 'Question'];
 const LANGS = ['python', 'javascript', 'sql', 'bash', 'json', 'yaml', 'markdown', 'autre'];
@@ -19,6 +21,8 @@ export default function CreatePost({ onCreated }) {
   const [lang, setLang]           = useState('python');
   const [url, setUrl]             = useState('');
   const [tags, setTags]           = useState([]);
+  const [fileData, setFileData]   = useState(null);
+  const [showFile, setShowFile]   = useState(false);
   const [loading, setLoading]     = useState(false);
   const [error, setError]         = useState('');
 
@@ -26,22 +30,27 @@ export default function CreatePost({ onCreated }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!content.trim()) return;
+    if (!content.trim() && !fileData) return;
     setLoading(true);
     setError('');
     try {
       const { data } = await api.post('/posts', {
-        content: content.trim(),
+        content: content.trim() || (fileData ? fileData.name : ''),
         type,
         code_language: type === 'code' ? lang : '',
         resource_url: type === 'resource' ? url : '',
         tags,
+        file_url:  fileData?.url  || '',
+        file_type: fileData?.type || '',
+        file_name: fileData?.name || '',
       });
       onCreated(data);
       setContent('');
       setUrl('');
       setTags([]);
       setType('text');
+      setFileData(null);
+      setShowFile(false);
       setExpanded(false);
     } catch (err) {
       setError(err.response?.data?.error || 'Erreur lors de la publication');
@@ -125,6 +134,22 @@ export default function CreatePost({ onCreated }) {
             />
           )}
 
+          {/* Fichier joint */}
+          <div>
+            <button type="button" onClick={() => setShowFile(v => !v)}
+              className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg border transition-colors mb-2 ${
+                showFile || fileData ? 'bg-violet-600/20 text-violet-300 border-violet-500/30' : 'bg-slate-700 text-slate-400 border-slate-600 hover:border-slate-500'
+              }`}>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+              </svg>
+              {fileData ? `📎 ${fileData.name}` : 'Joindre un fichier (image, vidéo, audio, zip…)'}
+            </button>
+            {showFile && (
+              <FileUpload value={fileData} onUploaded={setFileData} onClear={() => { setFileData(null); setShowFile(false); }} />
+            )}
+          </div>
+
           {/* Tags */}
           <div>
             <p className="text-xs text-slate-400 mb-2">Tags (optionnel)</p>
@@ -153,14 +178,14 @@ export default function CreatePost({ onCreated }) {
           <div className="flex justify-end gap-2 pt-1">
             <button
               type="button"
-              onClick={() => { setExpanded(false); setContent(''); setTags([]); }}
+              onClick={() => { setExpanded(false); setContent(''); setTags([]); setFileData(null); setShowFile(false); }}
               className="px-4 py-2 text-sm text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
             >
               Annuler
             </button>
             <button
               type="submit"
-              disabled={!content.trim() || loading}
+              disabled={(!content.trim() && !fileData) || loading}
               className="px-5 py-2 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
             >
               {loading ? 'Publication...' : 'Publier'}

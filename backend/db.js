@@ -66,9 +66,25 @@ async function initDB() {
       created_at TIMESTAMP DEFAULT NOW()
     );
   `);
-  // Migration : ajoute parent_id si la table comments existait déjà sans cette colonne
+    CREATE TABLE IF NOT EXISTS messages (
+      id SERIAL PRIMARY KEY,
+      from_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      to_user_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      content   TEXT DEFAULT '',
+      file_url  TEXT DEFAULT '',
+      file_type TEXT DEFAULT '',
+      file_name TEXT DEFAULT '',
+      read INTEGER DEFAULT 0,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
+
+  // Migrations colonnes manquantes
   await pool.query(`
     ALTER TABLE comments ADD COLUMN IF NOT EXISTS parent_id INTEGER REFERENCES comments(id) ON DELETE SET NULL;
+    ALTER TABLE posts ADD COLUMN IF NOT EXISTS file_url  TEXT DEFAULT '';
+    ALTER TABLE posts ADD COLUMN IF NOT EXISTS file_type TEXT DEFAULT '';
+    ALTER TABLE posts ADD COLUMN IF NOT EXISTS file_name TEXT DEFAULT '';
   `);
   console.log('✅ Base de données prête');
 }

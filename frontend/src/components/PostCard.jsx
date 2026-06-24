@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../api';
 import CommentSection from './CommentSection';
+import FileAttachment from './FileAttachment';
 
 function timeAgo(date) {
   const s = Math.floor((Date.now() - new Date(date)) / 1000);
@@ -114,6 +115,13 @@ export default function PostCard({ post, onDelete, onLike }) {
           </div>
         ) : (
           <p className="text-slate-200 text-sm leading-relaxed whitespace-pre-wrap">{post.content}</p>
+        )}
+
+        {/* Fichier joint */}
+        {post.file_url && (
+          <div className="mt-3">
+            <FileAttachment url={post.file_url} type={post.file_type} name={post.file_name} />
+          </div>
         )}
 
         {/* Tags */}

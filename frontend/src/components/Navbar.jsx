@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Navbar() {
-  const { user, logout, unreadCount, notifications, fetchNotifications, markNotificationsRead } = useAuth();
+  const { user, logout, unreadCount, notifications, fetchNotifications, markNotificationsRead, unreadMsgs } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [showNotifs, setShowNotifs]   = useState(false);
@@ -83,6 +83,21 @@ export default function Navbar() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
             <span className="hidden sm:inline">Membres</span>
+          </Link>
+          <Link to="/messages"
+            className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              location.pathname.startsWith('/messages') ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            }`}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+            <span className="hidden sm:inline">Messages</span>
+            {unreadMsgs > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-pink-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                {unreadMsgs > 9 ? '9+' : unreadMsgs}
+              </span>
+            )}
           </Link>
         </div>
 

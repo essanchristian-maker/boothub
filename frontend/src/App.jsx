@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import Feed from './pages/Feed';
 import Profile from './pages/Profile';
 import Members from './pages/Members';
+import Messages from './pages/Messages';
 
 function Spinner() {
   return (
@@ -32,7 +33,9 @@ function AppRoutes() {
         <Route path="/register" element={user ? <Navigate to="/" replace /> : <Register />} />
         <Route path="/"         element={<Protected><Feed /></Protected>} />
         <Route path="/members"  element={<Protected><Members /></Protected>} />
-        <Route path="/profile/:id" element={<Protected><Profile /></Protected>} />
+        <Route path="/profile/:id"  element={<Protected><Profile /></Protected>} />
+        <Route path="/messages"     element={<Protected><Messages /></Protected>} />
+        <Route path="/messages/:userId" element={<Protected><Messages /></Protected>} />
         <Route path="*"         element={<Navigate to="/" replace />} />
       </Routes>
     </div>
