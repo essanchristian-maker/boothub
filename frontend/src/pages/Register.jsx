@@ -33,7 +33,7 @@ export default function Register() {
             </svg>
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight">BootHub</h1>
-          <p className="text-slate-400 mt-1 text-sm">Le réseau social de ton bootcamp</p>
+          <p className="text-slate-400 mt-1 text-sm">Bienvenue sur le réseau social de notre Bootcamp GEN-AI</p>
         </div>
 
         <div className="bg-slate-800/80 border border-slate-700/50 rounded-2xl p-8 backdrop-blur-sm">
@@ -62,7 +62,7 @@ export default function Register() {
                 type="email" required
                 value={form.email}
                 onChange={e => setForm({ ...form, email: e.target.value })}
-                placeholder="toi@bootcamp.com"
+                placeholder="Ton_Nom@bootcamp.com"
                 className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
               />
             </div>
