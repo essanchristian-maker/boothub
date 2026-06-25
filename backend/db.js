@@ -65,7 +65,7 @@ async function initDB() {
       read INTEGER DEFAULT 0,
       created_at TIMESTAMP DEFAULT NOW()
     );
-  `);
+
     CREATE TABLE IF NOT EXISTS messages (
       id SERIAL PRIMARY KEY,
       from_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
